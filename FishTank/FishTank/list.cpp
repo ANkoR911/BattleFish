@@ -14,6 +14,17 @@ void LIST::init(int hBackground, int hWork){
 	head = (FISHLIST *)NULL;
 	tail = (FISHLIST *)NULL;
 
+	// copy hungerbar image to buffer
+	fg_showpcx("Images/HungerBar.pcx", 0);
+	HungerBarBuf = (short *)malloc(fg_imagesiz(100, 10));
+	fg_move(0, 9);
+	fg_getdcb(HungerBarBuf, 100, 10);
+
+	fg_showpcx("Images/Text.pcx", 0);
+	TextBuffer = (short *)malloc(fg_imagesiz(1280, 64));
+	fg_move(0, 63);
+	fg_getdcb(TextBuffer, 1280, 64);
+
 	// choose a random number of fish
 	srand(fg_getclock());
 	nNodes = IRAND(6, 12);
@@ -42,6 +53,7 @@ void LIST::init(int hBackground, int hWork){
 		Node->yInc = IRAND(1, 4);
 		Node->Frame = IRAND(1, 2);
 		Node->FrameCounter = IRAND(0, 2);
+		Node->CurHunger = fish[Node->FishNum].MaxHunger;
 		if (head == (FISHLIST *)NULL)
 		{
 			head = Node;
@@ -199,6 +211,22 @@ void LIST::AnimateFish(int hBackground, int hWork)
 			Node->yMin = IRAND(60, 400);
 			Node->yMax = IRAND(Node->yMin, vbHeight - 1);
 		}
+
+		// add hungerbar above every fish and animate it
+		if (Node->CurHunger > 0)
+		{
+			fg_cutdcb(HungerBarBuf, HungerBar, 0, 0, 100, 100 * Node->CurHunger / fish[Node->FishNum].MaxHunger, 10);
+			fg_move(Node->x + fish[Node->FishNum].FishWidth[0] / 2 - 50, Node->y - fish[Node->FishNum].FishHeight[0] - 10);
+			fg_clipdcb(HungerBar, 100 * Node->CurHunger / fish[Node->FishNum].MaxHunger, 10);
+			--(Node->CurHunger);
+		}
+		else
+		{}; //if(Node->CurHunger <= 0){метод для удаления рыбы}
+
+		// display help menu (move it somewhere from there)
+		fg_cutdcb(TextBuffer, Text, 0, 32 * i1Pressed, 1280, 1280, 32);
+		fg_move(0, 710);
+		fg_clipdcb(Text, 1280, 32);
 
 		// increment fish frame (swish tail slowly)
 		Node->FrameCounter++;
